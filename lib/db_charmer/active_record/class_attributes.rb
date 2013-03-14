@@ -73,12 +73,15 @@ module DbCharmer
       end
 
       #---------------------------------------------------------------------------------------------
+      @@db_charmer_force_slave_reads_flags = {}
       def db_charmer_force_slave_reads_flags
-        Thread.current[:db_charmer_force_slave_reads] ||= {}
+        Thread.current[:db_charmer_force_slave_reads_flags] ||= @@db_charmer_force_slave_reads_flags
       end
 
       def db_charmer_force_slave_reads=(force)
-        db_charmer_force_slave_reads_flags[self.name] = force
+        Thread.exclusive do
+          db_charmer_force_slave_reads_flags[self.name] = force
+        end
       end
 
       def db_charmer_force_slave_reads
