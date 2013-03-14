@@ -37,6 +37,29 @@ module DbCharmer
       end
 
       #---------------------------------------------------------------------------------------------
+      # Track the last time a request to each slave failed
+      def db_charmer_slaves_failed_at
+        Thread.current[:db_charmer_slaves_failed_at] ||= {}
+      end
+
+      # Return a new array containing only slaves that have not responded to a request
+      # with an error in the last 15 seconds
+      def db_charmer_live_slaves
+        return nil unless db_charmer_slaves.any?
+        db_charmer_slaves.select do |s|
+          failed_at = db_charmer_slaves_failed_at[s.connection_name]
+          failed_at.nil? || failed_at < (Time.now.to_i - 15)
+        end
+      end
+
+      # Returns a random connection from the list of slaves that has not errored recently
+      def db_charmer_random_live_slave
+        live_slaves = db_charmer_live_slaves
+        return nil unless live_slaves.any?
+        live_slaves[rand(live_slaves.size)]
+      end
+
+      #---------------------------------------------------------------------------------------------
       def db_charmer_connection_proxies
         Thread.current[:db_charmer_connection_proxies] ||= {}
       end
