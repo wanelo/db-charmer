@@ -54,9 +54,28 @@ module DbCharmer
 
       module MasterSlaveClassMethods
         def on_slave(con = nil, proxy_target = nil, &block)
-          con ||= db_charmer_random_slave
+          con ||= db_charmer_random_live_slave
           raise ArgumentError, "No slaves found in the class and no slave connection given" unless con
           on_db(con, proxy_target, &block)
+        rescue ::ActiveRecord::ActiveRecordError => e
+          db_charmer_slaves_failed_at[con.connection_name] = Time.now.to_i
+
+          # AFAICT, the only way to find out if the NR agent is running without raising an
+          # exception is to check on the @agent ivar. :'(
+          if defined?(NewRelic) && NewRelic::Agent.instance_eval{@agent}
+            NewRelic::Agent.notice_error(e)
+          end
+          if defined?(Wanelo::Metrics)
+            Wanelo::Metrics.instance.increment("errors.db.slave_query")
+          end
+          Rails.logger.warn "#{e.class}: #{e.message}\n#{e.backtrace.join('\n  ')}"
+
+          if db_charmer_live_slaves.empty?
+            on_master(proxy_target, &block)
+          else
+            con = nil
+            retry
+          end
         end
 
         def on_master(proxy_target = nil, &block)

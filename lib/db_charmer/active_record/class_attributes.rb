@@ -40,6 +40,24 @@ module DbCharmer
         @@db_charmer_slaves[self.name] || []
       end
 
+      def db_charmer_slaves_failed_at
+        @@db_charmer_slaves_failed_at ||= {}
+      end
+
+      def db_charmer_live_slaves
+        return nil unless db_charmer_slaves.any?
+        db_charmer_slaves.select do |s|
+          failed_at = db_charmer_slaves_failed_at[s.connection_name]
+          failed_at.nil? || failed_at < (Time.now.to_i - 15)
+        end
+      end
+
+      def db_charmer_random_live_slave
+        live_slaves = db_charmer_live_slaves
+        return nil unless live_slaves.any?
+        live_slaves[rand(live_slaves.size)]
+      end
+
       def db_charmer_random_slave
         return nil unless db_charmer_slaves.any?
         db_charmer_slaves[rand(db_charmer_slaves.size)]
