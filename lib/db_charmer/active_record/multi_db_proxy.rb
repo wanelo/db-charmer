@@ -75,10 +75,11 @@ module DbCharmer
             # Then, record the slave failure time, and try another option
             db_charmer_slaves_failed_at[con.connection_name] = Time.now.to_i
 
-            if db_charmer_live_slaves.empty?
+            live_slaves = db_charmer_live_slaves
+            if live_slaves.empty?
               return on_master(proxy_target, &block)
             else
-              con = db_charmer_random_live_slave
+              con = live_slaves[rand(live_slaves.size)]
               retry
             end
           end
