@@ -81,7 +81,7 @@ module DbCharmer
           # Then we should use that connection everywhere except cases when a model is slave-enabled
           # in those cases DML queries go to the master
           if db_charmer_connection_is_forced
-            return :master if db_charmer_enable_slaves && MASTER_METHODS.member?(method)
+            return :master if db_charmer_enable_slaves
             return :default
           end
 
