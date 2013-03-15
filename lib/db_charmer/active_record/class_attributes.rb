@@ -120,10 +120,13 @@ module DbCharmer
       #---------------------------------------------------------------------------------------------
       def db_charmer_remapped_connection
         return nil unless db_charmer_top_level_connection?
-        name = :master
-        proxy = db_charmer_connection_proxy
-        name = proxy.db_charmer_connection_name.to_sym if proxy
 
+        proxy = db_charmer_connection_proxy
+        if proxy && proxy.is_a?(DbCharmer::ConnectionProxy)
+          name = proxy.db_charmer_connection_name.to_sym
+        end
+
+        name ||= :master
         remapped = db_charmer_database_remappings[name]
         remapped ? DbCharmer::ConnectionFactory.connect(remapped, true) : nil
       end
