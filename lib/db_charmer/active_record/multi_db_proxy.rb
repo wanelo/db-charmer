@@ -55,7 +55,13 @@ module DbCharmer
       module MasterSlaveClassMethods
         def on_slave(con = nil, proxy_target = nil, &block)
           raise ArgumentError, "No slaves found in the class and no slave connection given" if db_charmer_slaves.empty?
-          con ||= db_charmer_random_live_slave
+
+          con ||= begin
+            db_charmer_random_live_slave
+          rescue
+            nil
+          end
+
           return on_master(proxy_target, &block) if con.nil?
 
           begin
