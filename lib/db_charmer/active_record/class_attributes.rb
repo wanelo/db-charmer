@@ -101,12 +101,13 @@ module DbCharmer
       end
 
       #---------------------------------------------------------------------------------------------
+      @@db_charmer_connection_levels = Hash.new(0)
       def db_charmer_connection_levels
-        Thread.current[:db_charmer_connection_levels] ||= Hash.new(0)
+        @@db_charmer_connection_levels
       end
 
       def db_charmer_connection_level=(level)
-        db_charmer_connection_levels[self.name] = level
+        Thread.exclusive { db_charmer_connection_levels[self.name] = level }
       end
 
       def db_charmer_connection_level
