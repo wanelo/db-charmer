@@ -60,12 +60,17 @@ module DbCharmer
       end
 
       #---------------------------------------------------------------------------------------------
+      @@db_charmer_connection_proxies = {}
       def db_charmer_connection_proxies
-        Thread.current[:db_charmer_connection_proxies] ||= {}
+        Thread.exclusive do
+          @@db_charmer_connection_proxies
+        end
       end
 
       def db_charmer_connection_proxy=(proxy)
-        db_charmer_connection_proxies[self.name] = proxy
+        Thread.exclusive do
+          @@db_charmer_connection_proxies[self.name] = proxy
+        end
       end
 
       def db_charmer_connection_proxy
